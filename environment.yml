@@ -1,0 +1,10 @@
+name: demucs-v4-musdb
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - ffmpeg
+  - libsndfile
+  - pip
+  - pip:
+      - -r requirements.txt

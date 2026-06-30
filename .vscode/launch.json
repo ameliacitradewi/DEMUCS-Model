@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Validate Dataset",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_project.py",
+      "console": "integratedTerminal",
+      "args": ["validate"]
+    },
+    {
+      "name": "Pipeline One Test Track",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_project.py",
+      "console": "integratedTerminal",
+      "args": ["pipeline-one", "--split", "test"]
+    },
+    {
+      "name": "Evaluate Test Dataset",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_project.py",
+      "console": "integratedTerminal",
+      "args": ["evaluate-dataset", "--split", "test"]
+    }
+  ]
+}

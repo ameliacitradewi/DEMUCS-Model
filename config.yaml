@@ -1,0 +1,33 @@
+# Ubah path ini ke lokasi MUSDB18-HQ Anda.
+# Gunakan forward slash juga di Windows, misalnya D:/datasets/MUSDB18-HQ
+dataset_root: "../MUSDB18-HQ"
+output_root: "outputs"
+
+model:
+  name: "htdemucs_ft"
+  device: "auto"       # auto, cpu, cuda, atau mps
+  shifts: 1
+  overlap: 0.25
+  jobs: 0
+  segment: null         # null = default model. Untuk VRAM kecil coba 7.
+
+stems:
+  - drums
+  - bass
+  - other
+  - vocals
+
+evaluation:
+  n_fft: 4096
+  hop_length: 1024
+  top_db: 80
+  bss_window_seconds: 2.0
+  bss_hop_seconds: 1.5
+  bss_filter_length: 512
+
+visualization:
+  start_seconds: 30.0
+  duration_seconds: 10.0
+  n_fft: 4096
+  hop_length: 1024
+  top_db: 80
