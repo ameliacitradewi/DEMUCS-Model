@@ -1,14 +1,14 @@
 # Demucs V4 Music Source Separation
 
-Pipeline Python untuk memisahkan audio musik dan mengevaluasi hasilnya pada MUSDB18-HQ. Proyek ini menjalankan model pralatih **Hybrid Transformer Demucs v4** (`htdemucs_ft`) pada satu campuran audio dan menghasilkan empat stem: **drums**, **bass**, **vocals**, dan **other**. Stem `other` mencakup semua sumber yang tidak masuk ke tiga kategori lainnya.
+A Python pipeline for separating music into stems and evaluating the results on MUSDB18-HQ. It runs the pretrained **Hybrid Transformer Demucs v4** model (`htdemucs_ft`) on an audio mixture and produces four stems — **drums**, **bass**, **vocals**, and **other**. The `other` stem contains the remaining sources.
 
-Pipeline mencakup validasi dataset, inferensi satu track atau satu split, evaluasi terhadap stem referensi, visualisasi sinyal, dan laporan agregat.
+The pipeline covers dataset validation, single-track and batch inference, evaluation against reference stems, signal visualization, and aggregate reporting.
 
-## Instalasi
+## Installation
 
-Gunakan **Python 3.10 atau 3.11**. Dependensi utama mencakup Demucs 4.0.1, PyTorch, SoundFile, librosa, dan museval. Sediakan FFmpeg di `PATH` jika diperlukan untuk membaca format audio selain WAV. Bobot model diunduh pada inferensi pertama dan disimpan di cache.
+Use **Python 3.10 or 3.11**. The main dependencies are Demucs 4.0.1, PyTorch, SoundFile, librosa, and museval. Make FFmpeg available on `PATH` if your input format requires it. The first inference run downloads and caches the pretrained model weights.
 
-### macOS dan Linux
+### macOS and Linux
 
 ```bash
 git clone https://github.com/ameliacitradewi/DEMUCS-Model.git
@@ -21,31 +21,31 @@ python -m pip install -r requirements.txt
 
 ### Windows
 
-Clone repositori dan masuk ke direktorinya, lalu jalankan perintah berikut di Command Prompt. Skrip membuat virtual environment, memasang dependensi, dan menjalankan tes.
+Clone the repository, open its directory in Command Prompt, and run the following commands. The setup script creates a virtual environment, installs dependencies, and runs the tests.
 
 ```bat
 scripts\setup_windows.bat
 .venv\Scripts\activate.bat
 ```
 
-Tes juga dapat dijalankan dari virtual environment aktif dengan `python -m pytest -q`.
+To run the tests separately, activate the virtual environment and run `python -m pytest -q`.
 
-## Konfigurasi dataset dan model
+## Dataset and model configuration
 
-Unduh [MUSDB18-HQ](https://zenodo.org/records/3338373), lalu atur lokasi dataset di [config.yaml](config.yaml). Path relatif dihitung dari direktori file konfigurasi.
+Download [MUSDB18-HQ](https://zenodo.org/records/3338373) and set its location in [config.yaml](config.yaml). Relative paths are resolved from the directory containing the configuration file.
 
 ```yaml
 dataset_root: "../MUSDB18-HQ"
 output_root: "outputs"
 ```
 
-Dataset menggunakan struktur `<split>/<nama track>/`. Setiap folder track harus berisi `mixture.wav`, `drums.wav`, `bass.wav`, `vocals.wav`, dan `other.wav`. Distribusi resmi menyediakan split `train` dan `test`. Jika membuat split `valid` sendiri, ambil track dari split pelatihan dan pisahkan nama track antar-split.
+Organize tracks as `<split>/<track name>/`. Each track directory must contain `mixture.wav`, `drums.wav`, `bass.wav`, `vocals.wav`, and `other.wav`. The official distribution includes `train` and `test` splits. If you create a `valid` split, draw its tracks from the original training split and keep track names unique across splits.
 
-Konfigurasi bawaan menggunakan `htdemucs_ft`, `shifts: 1`, dan `overlap: 0.25`. Mode `model.device: auto` memilih CUDA jika tersedia dan CPU jika tidak. Untuk mencoba MPS di Mac yang mendukungnya, atur `model.device: mps` secara eksplisit. Jika CUDA kehabisan memori, coba `model.segment: 7` atau gunakan CPU.
+The default configuration uses `htdemucs_ft`, `shifts: 1`, and `overlap: 0.25`. With `model.device: auto`, the pipeline uses CUDA when available and falls back to CPU. To try MPS on a compatible Mac, set `model.device: mps` explicitly. If CUDA runs out of memory, try `model.segment: 7` or switch to CPU.
 
-## Menjalankan pipeline
+## Running the pipeline
 
-### Validasi dan evaluasi satu track
+### Validate the dataset and evaluate one track
 
 ```bash
 python run_project.py validate --splits train,test
@@ -53,11 +53,11 @@ python run_project.py list-tracks --split test
 python run_project.py pipeline-one --split test
 ```
 
-`validate` memeriksa keberadaan file, konsistensi sample rate, jumlah kanal dan frame, serta nama track yang muncul di lebih dari satu split. Tambahkan `--check-mixture-sum --sum-check-limit 5` untuk memeriksa apakah campuran mendekati penjumlahan stem referensi pada lima track pertama di setiap split.
+`validate` checks that the required files exist, that sample rates, channel counts, and frame counts match within each track, and that track names are unique across the selected splits. Add `--check-mixture-sum --sum-check-limit 5` to check whether the mixture approximates the sum of the reference stems for the first five tracks in each split.
 
-`pipeline-one` menjalankan inferensi, evaluasi, dan visualisasi untuk track pertama menurut abjad. Gunakan `--track "Nama Folder Track"` untuk memilih track. Tambahkan `--bss` untuk BSS Eval v4 atau `--extras` untuk membuat plot FFT dan mel-spectrogram.
+`pipeline-one` runs separation, evaluation, and visualization for the first track in alphabetical order. Use `--track "Track Folder Name"` to select a specific track. Add `--bss` to include BSS Eval v4 and `--extras` to generate FFT and mel spectrogram plots.
 
-### Evaluasi seluruh split
+### Evaluate a full split
 
 ```bash
 python run_project.py separate-dataset --split test
@@ -65,32 +65,32 @@ python run_project.py evaluate-dataset --split test --bss
 python run_project.py report --split test
 ```
 
-Tambahkan `--limit 2` pada kedua perintah batch untuk mencoba alur pada dua track. Hapus `--bss` untuk menjalankan metrik default yang lebih cepat. Inferensi melewati track yang keempat WAV keluarannya sudah tersedia. Gunakan `--overwrite` pada perintah pemisahan untuk menghitung ulang setelah mengubah parameter model.
+Add `--limit 2` to both batch commands for a two-track smoke test. Omit `--bss` to use the faster default metrics. Separation skips tracks whose four output WAV files already exist. Use `--overwrite` with the separation command to regenerate stems after changing model parameters.
 
-### Pisahkan lagu eksternal
+### Separate an external audio file
 
 ```bash
 python run_project.py external --audio "path/to/song.wav" --visualize
 ```
 
-Perintah ini menghasilkan WAV dan, dengan `--visualize`, waveform serta spectrogram per stem. Untuk lagu tanpa stem referensi, gunakan listening test untuk menilai kebocoran antarsumber dan artefak. Metrik seperti SI-SDR dan BSS Eval memerlukan stem referensi.
+This command produces one WAV file per stem. With `--visualize`, it also generates a waveform and spectrogram for each stem. When reference stems are unavailable, use a listening test to assess source leakage and artifacts. SI-SDR and BSS Eval require reference stems.
 
-## Metode evaluasi
+## Evaluation methodology
 
-Inferensi memakai API Python Demucs dan menyimpan estimasi sebagai **WAV float32**, tanpa rescaling atau hard clipping saat penulisan. Sebelum menghitung skor, evaluator menyesuaikan kanal dan sample rate estimasi dengan campuran lalu memotong seluruh sinyal ke panjang bersama terpendek. Perbandingan dilakukan antara estimasi dan referensi dengan label stem yang sama.
+The pipeline calls the Demucs Python API and writes the estimated stems as **32-bit floating-point WAV files**, preserving their amplitudes at export. Before scoring, the evaluator matches the estimates to the mixture’s sample rate and channel count, then trims all signals to the shortest length. Each estimate is compared with the reference stem that has the same label.
 
-| Metrik | Interpretasi |
+| Metric | Interpretation |
 | --- | --- |
-| SI-SDR dan SI-SDRi | SI-SDR mengukur kualitas estimasi tanpa penalti terhadap perubahan gain global. SI-SDRi mengukur peningkatan dibandingkan penggunaan campuran asli sebagai baseline. |
-| Waveform SDR | Rasio energi referensi terhadap residual pada waveform yang sensitif terhadap perubahan gain. |
-| BSS Eval v4 | Metrik opsional yang melaporkan median antar-frame untuk SDR, ISR, SIR, dan SAR. |
-| Diagnostik | MAE, RMSE, korelasi, spectral convergence, log-spectral MAE, gain error, dan clipping. Konsistensi campuran mengukur selisih antara campuran asli dan jumlah estimasi stem. |
+| SI-SDR and SI-SDRi | SI-SDR measures separation quality independently of overall gain. SI-SDRi measures the improvement over using the original mixture as the estimate. |
+| Waveform SDR | Gain-sensitive ratio of reference energy to waveform residual energy. |
+| BSS Eval v4 | Optional evaluation that reports frame-wise medians for SDR, ISR, SIR, and SAR. |
+| Diagnostic metrics | MAE, RMSE, correlation, spectral convergence, log-spectral MAE, gain error, and clipping. Mixture consistency measures how closely the estimated stems sum to the original mixture. |
 
-Visualisasi membandingkan waveform dan log-spectrogram dari referensi, estimasi, dan residual. Spectrogram menggunakan skala dB yang sama untuk ketiganya. Secara default, plot menampilkan segmen 10 detik mulai dari detik ke-30. Atur rentangnya dengan `--start` dan `--duration`.
+Plots compare the waveforms and log spectrograms of the reference, estimate, and residual. The spectrograms share a dB scale. By default, the plots show a 10-second segment starting 30 seconds into the track. Use `--start` and `--duration` to change the plotted segment.
 
-## Hasil yang tercatat
+## Benchmark results
 
-Median per stem untuk `htdemucs_ft` pada split test MUSDB18-HQ, berdasarkan [catatan metodologi eksperimen](docs/methodology.md#results). Seluruh skor dalam dB.
+The table shows median scores in dB for `htdemucs_ft` on the MUSDB18-HQ test split, as recorded in the [experiment methodology](docs/methodology.md#results).
 
 | Stem | SI-SDR | SI-SDRi | BSS Eval SDR |
 | --- | ---: | ---: | ---: |
@@ -99,26 +99,26 @@ Median per stem untuk `htdemucs_ft` pada split test MUSDB18-HQ, berdasarkan [cat
 | Other | 5.76 | 10.27 | 6.22 |
 | Vocals | 9.24 | 14.97 | 9.47 |
 
-Median SI-SDRi positif pada keempat stem. Drums memperoleh median SI-SDR tertinggi, sedangkan bass memperoleh median BSS Eval SDR tertinggi. Stem `other` memperoleh median terendah pada ketiga metrik.
+Median SI-SDRi was positive for all four stems. Drums had the highest median SI-SDR, bass had the highest median BSS Eval SDR, and `other` had the lowest median on all three metrics.
 
-## Keluaran eksperimen
+## Experiment outputs
 
-| Lokasi di bawah `outputs/` | Isi |
+| Path under `outputs/` | Contents |
 | --- | --- |
-| `reports/dataset_validation/` | `validation_tracks.csv` dan `validation_summary.json`. |
-| `separated/<model>/<track>/` | Empat WAV estimasi dan `inference_metadata.json`. |
-| `evaluation/<model>/<split>/` | CSV metrik dan ringkasan agregat, log kesalahan, serta `stem_metrics.csv` dan `track_summary.json` per track. |
-| `figures/<model>/<split>/<track>/` | Plot waveform dan spectrogram untuk perintah visualisasi dataset. |
-| `reports/<model>/<split>/` | Statistik per stem, peringkat track, contoh best/median/worst, boxplot, dan `automatic_findings.md`. |
+| `reports/dataset_validation/` | `validation_tracks.csv` and `validation_summary.json`. |
+| `separated/<model>/<track>/` | Four estimated WAV stems and `inference_metadata.json`. |
+| `evaluation/<model>/<split>/` | Aggregate metric and summary CSVs, an evaluation error log, and per-track `stem_metrics.csv` and `track_summary.json` files. |
+| `figures/<model>/<split>/<track>/` | Waveform and spectrogram plots for dataset tracks. |
+| `reports/<model>/<split>/` | Per-stem statistics, track rankings, best, median, and worst cases, box plots, and `automatic_findings.md`. |
 
-Folder hasil pemisahan menggunakan nama model dan nama track tanpa menyertakan split. Untuk mencegah penggunaan ulang hasil dari audio berbeda dengan nama yang sama, gunakan `--name` yang unik untuk audio eksternal atau atur `output_root` terpisah untuk eksperimen lain.
+Separation outputs are keyed by model and track name. Use a unique `--name` for external audio or a separate `output_root` for experiments with duplicate track names to avoid reusing an unrelated result.
 
-## Struktur repositori
+## Repository structure
 
-| Path | Peran |
+| Path | Purpose |
 | --- | --- |
-| [run_project.py](run_project.py) | CLI untuk validasi, inferensi, evaluasi, visualisasi, dan laporan. |
-| [config.yaml](config.yaml) | Pengaturan path, model, evaluasi, dan visualisasi. |
-| [demucs_project/](demucs_project/) | Implementasi inferensi, pemrosesan audio, metrik, serta pembuatan plot dan laporan. |
-| [docs/methodology.md](docs/methodology.md) | Desain eksperimen, definisi metrik, keterbatasan, dan hasil yang tercatat. |
-| [scripts/](scripts/) dan [tests/](tests/) | Skrip instalasi dan pengujian. |
+| [run_project.py](run_project.py) | CLI for validation, separation, evaluation, visualization, and reporting. |
+| [config.yaml](config.yaml) | Paths and settings for the model, evaluation, and plots. |
+| [demucs_project/](demucs_project/) | Inference, audio processing, metrics, plotting, and reporting. |
+| [docs/methodology.md](docs/methodology.md) | Experiment design, metric definitions, limitations, and recorded results. |
+| [scripts/](scripts/) and [tests/](tests/) | Setup scripts and tests. |
